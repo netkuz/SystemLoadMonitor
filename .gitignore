@@ -5,7 +5,6 @@
 *.ipr
 *.lst
 *.jar
-*.xml
 # Ignore target, out
 **/target
 **/out
