@@ -1,0 +1,13 @@
+# Ignore any Idea files
+.idea/*
+*.iws
+*.iml
+*.ipr
+*.lst
+*.jar
+*.xml
+# Ignore target, out
+**/target
+**/out
+# Ignore files .class
+**/*.class
