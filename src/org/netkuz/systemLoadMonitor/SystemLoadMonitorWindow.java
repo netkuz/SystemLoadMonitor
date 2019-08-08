@@ -4,7 +4,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.management.*;
 import java.text.DateFormat;
@@ -36,18 +35,12 @@ public class SystemLoadMonitorWindow {
     private JTextPane garbageCollectorTextPane;
     private JTextPane systemTextPane;
 
-    private static final DateFormat format = new SimpleDateFormat("HH:mm:ss");
-
-    private static final String RUNNABLE = "RUNNABLE", TIMED_WAITING = "TIMED_WAITING", WAITING = "WAITING", BLOCKED = "BLOCKED";
-
     private SystemLoadMonitorWindow(ToolWindow toolWindow) {
 
-        ActionListener updateAction = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        ActionListener updateAction = e ->
                 updateData(ManagementFactory.getRuntimeMXBean(), ManagementFactory.getMemoryMXBean(),
                         ManagementFactory.getThreadMXBean(), ManagementFactory.getGarbageCollectorMXBeans());
-            }
-        };
+
         Timer t = new Timer(500, updateAction);
         t.start();
     }
@@ -67,10 +60,12 @@ public class SystemLoadMonitorWindow {
 
     private void updateData(Object...data) {
         for(Object d : data) {
-            if (d instanceof RuntimeMXBean)
+            if (d instanceof RuntimeMXBean) {
                 setSystemPane((RuntimeMXBean) d);
-            if (d instanceof MemoryMXBean)
+            }
+            if (d instanceof MemoryMXBean) {
                 setMemoryLabels((MemoryMXBean) d);
+            }
 
             if (d instanceof ThreadMXBean) {
                 int total = ((ThreadMXBean) d).getThreadCount();
@@ -78,20 +73,23 @@ public class SystemLoadMonitorWindow {
 
                 Map<String, Integer> infoThreadsMap = getThreadMap(((ThreadMXBean) d));
 
-                setThreadLabels(total, infoThreadsMap, runnableLabel, "Runnable: ", RUNNABLE, runnableProgressBar);
-                setThreadLabels(total, infoThreadsMap, timedWaitingLabel, "Timed waiting: ", TIMED_WAITING, timedWaitingProgressBar);
-                setThreadLabels(total, infoThreadsMap, waitingLabel, "Waiting: ", WAITING, waitingProgressBar);
-                setThreadLabels(total, infoThreadsMap, blockedLabel, "Blocked: ", BLOCKED, blockedProgressBar);
+                setThreadLabels(total, infoThreadsMap, runnableLabel, "Runnable: ", Threads.RUNNABLE.name(), runnableProgressBar);
+                setThreadLabels(total, infoThreadsMap, timedWaitingLabel, "Timed waiting: ", Threads.TIMED_WAITING.name(), timedWaitingProgressBar);
+                setThreadLabels(total, infoThreadsMap, waitingLabel, "Waiting: ", Threads.WAITING.name(), waitingProgressBar);
+                setThreadLabels(total, infoThreadsMap, blockedLabel, "Blocked: ", Threads.BLOCKED.name(), blockedProgressBar);
             }
 
-            if (d instanceof List)
-                if(!((List)d).isEmpty() && ((List)d).get(0) instanceof GarbageCollectorMXBean)
+            if (d instanceof List) {
+                if (!((List) d).isEmpty() && ((List) d).get(0) instanceof GarbageCollectorMXBean) {
                     setGarbageCollectorPane((List<GarbageCollectorMXBean>) d);
+                }
+            }
         }
 
     }
 
     private void setSystemPane(RuntimeMXBean runtimeMXBean) {
+        DateFormat format = new SimpleDateFormat("HH:mm:ss");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         StringBuilder sb = new StringBuilder();
         sb.append("Vendor: ")
@@ -116,25 +114,23 @@ public class SystemLoadMonitorWindow {
     @NotNull
     private Map<String, Integer> getThreadMap(ThreadMXBean threadMXBean) {
         Map<String, Integer> infoThreadsMap = new HashMap<>();
-        infoThreadsMap.put(RUNNABLE, 0);
-        infoThreadsMap.put(TIMED_WAITING, 0);
-        infoThreadsMap.put(WAITING, 0);
-        infoThreadsMap.put(BLOCKED, 0);
-        for(Long threadID : threadMXBean.getAllThreadIds()) {
+        infoThreadsMap.put(Threads.RUNNABLE.name(), 0);
+        infoThreadsMap.put(Threads.TIMED_WAITING.name(), 0);
+        infoThreadsMap.put(Threads.WAITING.name(), 0);
+        infoThreadsMap.put(Threads.BLOCKED.name(), 0);
+        for(long threadID : threadMXBean.getAllThreadIds()) {
             ThreadInfo info = threadMXBean.getThreadInfo(threadID);
-            if (infoThreadsMap.containsKey(info.getThreadState().toString())) {
-                int val = infoThreadsMap.get(info.getThreadState().toString());
-                infoThreadsMap.put(info.getThreadState().toString(), ++val);
-            }
+            infoThreadsMap.computeIfPresent(info.getThreadState().toString(), (k, v) -> v += 1);
         }
         return infoThreadsMap;
     }
 
     private void setThreadLabels(int total, Map<String, Integer> infoThreadsMap, JLabel label, String nameLabel, String name, JProgressBar progressBar) {
-        label.setText(nameLabel + infoThreadsMap.get(name));
+        Integer threadValue = infoThreadsMap.get(name);
+        label.setText(nameLabel + threadValue);
         progressBar.setMaximum(total);
-        progressBar.setString(infoThreadsMap.get(name).toString());
-        progressBar.setValue(infoThreadsMap.get(name));
+        progressBar.setString(threadValue.toString());
+        progressBar.setValue(threadValue);
     }
 
     private void setGarbageCollectorPane(List<GarbageCollectorMXBean> garbageCollectorMXBeanList) {
@@ -148,14 +144,15 @@ public class SystemLoadMonitorWindow {
         garbageCollectorTextPane.setText(sb.toString());
     }
 
-    private static String format(double bytes, int digits) {
-        String[] dictionary = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+    private String format(double bytes, int digits) {
+        String[] dictionary = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
         int index = 0;
-        for (; index < dictionary.length; index++) {
+        while (index < dictionary.length - 1) {
             if (bytes < 1024) {
                 break;
             }
             bytes = bytes / 1024;
+            index++;
         }
         return String.format("%." + digits + "f", bytes) + " " + dictionary[index];
     }
