@@ -5,8 +5,10 @@
 *.ipr
 *.lst
 *.jar
-# Ignore target, out
+# Ignore gradle, build, target, out
 **/target
 **/out
+**/.gradle
+**/build
 # Ignore files .class
 **/*.class

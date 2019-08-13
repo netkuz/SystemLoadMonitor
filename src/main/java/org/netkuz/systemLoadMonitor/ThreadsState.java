@@ -1,5 +1,5 @@
 package org.netkuz.systemLoadMonitor;
 
-public enum Threads {
+public enum ThreadsState {
     RUNNABLE, TIMED_WAITING, WAITING, BLOCKED
 }

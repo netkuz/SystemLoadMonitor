@@ -73,10 +73,10 @@ public class SystemLoadMonitorWindow {
 
                 Map<String, Integer> infoThreadsMap = getThreadMap(((ThreadMXBean) d));
 
-                setThreadLabels(total, infoThreadsMap, runnableLabel, "Runnable: ", Threads.RUNNABLE.name(), runnableProgressBar);
-                setThreadLabels(total, infoThreadsMap, timedWaitingLabel, "Timed waiting: ", Threads.TIMED_WAITING.name(), timedWaitingProgressBar);
-                setThreadLabels(total, infoThreadsMap, waitingLabel, "Waiting: ", Threads.WAITING.name(), waitingProgressBar);
-                setThreadLabels(total, infoThreadsMap, blockedLabel, "Blocked: ", Threads.BLOCKED.name(), blockedProgressBar);
+                setThreadLabels(total, infoThreadsMap, runnableLabel, "Runnable: ", ThreadsState.RUNNABLE.name(), runnableProgressBar);
+                setThreadLabels(total, infoThreadsMap, timedWaitingLabel, "Timed waiting: ", ThreadsState.TIMED_WAITING.name(), timedWaitingProgressBar);
+                setThreadLabels(total, infoThreadsMap, waitingLabel, "Waiting: ", ThreadsState.WAITING.name(), waitingProgressBar);
+                setThreadLabels(total, infoThreadsMap, blockedLabel, "Blocked: ", ThreadsState.BLOCKED.name(), blockedProgressBar);
             }
 
             if (d instanceof List) {
@@ -114,10 +114,10 @@ public class SystemLoadMonitorWindow {
     @NotNull
     private Map<String, Integer> getThreadMap(ThreadMXBean threadMXBean) {
         Map<String, Integer> infoThreadsMap = new HashMap<>();
-        infoThreadsMap.put(Threads.RUNNABLE.name(), 0);
-        infoThreadsMap.put(Threads.TIMED_WAITING.name(), 0);
-        infoThreadsMap.put(Threads.WAITING.name(), 0);
-        infoThreadsMap.put(Threads.BLOCKED.name(), 0);
+        infoThreadsMap.put(ThreadsState.RUNNABLE.name(), 0);
+        infoThreadsMap.put(ThreadsState.TIMED_WAITING.name(), 0);
+        infoThreadsMap.put(ThreadsState.WAITING.name(), 0);
+        infoThreadsMap.put(ThreadsState.BLOCKED.name(), 0);
         for(long threadID : threadMXBean.getAllThreadIds()) {
             ThreadInfo info = threadMXBean.getThreadInfo(threadID);
             infoThreadsMap.computeIfPresent(info.getThreadState().toString(), (k, v) -> v += 1);
